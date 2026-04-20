@@ -1,0 +1,2 @@
+model/model.pkl filter=lfs diff=lfs merge=lfs -text
+agro_environmental_dataset.csv filter=lfs diff=lfs merge=lfs -text
