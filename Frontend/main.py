@@ -6,6 +6,8 @@ import requests
 # ================================
 st.set_page_config(page_title="Plant Growth", layout="wide")
 
+BACKGROUND_IMAGE = "https://images.pexels.com/photos/1379620/pexels-photo-1379620.jpeg"
+
 # ================================
 # STATE
 # ================================
@@ -22,13 +24,21 @@ def set_home_style():
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    .block-container {
+    div[data-testid="stAppViewContainer"] .main .block-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         padding: 0 !important;
         max-width: 100% !important;
     }
 
+    div[data-testid="stAppViewContainer"] .main .block-container > div {
+        width: 100%;
+    }
+
     .stApp {
-        background: url("https://images.pexels.com/photos/1379620/pexels-photo-1379620.jpeg") no-repeat center center fixed;
+        background: url("__BG__") no-repeat center center fixed;
         background-size: cover;
     }
 
@@ -36,40 +46,87 @@ def set_home_style():
         content: "";
         position: fixed;
         inset: 0;
-        backdrop-filter: blur(10px);
-        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(12px);
+        background: linear-gradient(180deg, rgba(8, 14, 10, 0.84), rgba(8, 14, 10, 0.62));
         z-index: -1;
     }
 
-    .full-center {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    .home-title,
+    .home-subtitle {
         text-align: center;
     }
 
-    .title {
-        font-size: 56px;
-        color: white;
-        font-weight: bold;
+    .home-title {
+        font-size: clamp(2rem, 3.8vw, 4rem);
+        color: white !important;
+        font-weight: 800;
+        line-height: 1.05;
+        margin-bottom: 0.5rem;
+        max-width: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
-    .subtitle {
-        font-size: 20px;
-        color: #f1f1f1;
-        margin-bottom: 30px;
+    @media (min-width: 901px) {
+        .home-title {
+            white-space: nowrap;
+        }
     }
 
-    div.stButton {
+    @media (max-width: 900px) {
+        .home-title {
+            white-space: normal;
+        }
+    }
+
+    .home-subtitle {
+        font-size: 1.05rem;
+        color: rgba(255, 255, 255, 0.86) !important;
+        margin: 0 auto 0.6rem;
+        line-height: 1.6;
+        max-width: 680px;
+    }
+
+    .home-center div.stButton {
         display: flex;
         justify-content: center;
+        width: 100%;
+        margin-top: 0.8rem;
+    }
+
+    .home-center div.stButton > button {
+        margin: 0 auto;
+    }
+
+    div[data-testid="stButton"] > button,
+    div[data-testid="stButton"] button,
+    button[kind="secondary"] {
+        background: linear-gradient(135deg, #7ad86b, #2f9e57) !important;
+        background-color: #2f9e57 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 999px !important;
+        width: 100% !important;
+        max-width: 260px !important;
+        padding: 0.8rem 1.2rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 12px 28px rgba(47, 158, 87, 0.35) !important;
+        cursor: pointer !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+    }
+
+    div[data-testid="stButton"] > button:hover,
+    div[data-testid="stButton"] button:hover,
+    button[kind="secondary"]:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.08);
+        box-shadow: 0 14px 32px rgba(47, 158, 87, 0.45) !important;
     }
 
     </style>
-    """, unsafe_allow_html=True)
+    """.replace("__BG__", BACKGROUND_IMAGE), unsafe_allow_html=True)
 
 # ================================
 # PREDICT STYLE
@@ -81,85 +138,176 @@ def set_predict_style():
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* BACKGROUND */
     .stApp {
-        background: url("https://images.pexels.com/photos/1379620/pexels-photo-1379620.jpeg") no-repeat center center fixed;
+        background: url("__BG__") no-repeat center center fixed;
         background-size: cover;
     }
 
-    /* DARK OVERLAY */
     .stApp::before {
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(6px);
+        background: linear-gradient(180deg, rgba(5, 10, 7, 0.78), rgba(5, 10, 7, 0.56));
+        backdrop-filter: blur(10px);
         z-index: -1;
     }
 
-    /* CONTAINER */
     .block-container {
         padding-top: 2rem;
-        max-width: 900px;
+        padding-bottom: 2rem;
+        max-width: 1120px;
     }
 
-    /* TITLE */
+    h1, h2, h3, p, label {
+        color: white;
+    }
+
     h1 {
         text-align: center;
         color: white;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
     }
 
-    /* === GLASS CARD (INI YANG DIPERBAIKI) === */
+    .page-subtitle {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 760px;
+        margin: 0 auto 1.5rem;
+        line-height: 1.55;
+    }
+
+    .stTitle, h1 {
+        text-align: center !important;
+    }
+
+    .top-strip .small-note,
+    .page-subtitle,
+    .section-title {
+        text-align: center;
+    }
+
+    .page-subtitle + div,
+    .top-strip + h1,
+    .top-strip + div {
+        text-align: center;
+    }
+
+    .top-strip {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+        margin: 0 auto 1.25rem;
+        padding: 0.9rem 1.2rem;
+        border-radius: 18px;
+        background: rgba(8, 14, 10, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        max-width: 760px;
+    }
+
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: 999px;
+        background: rgba(122, 216, 107, 0.16);
+        color: #d8ffd2;
+        font-size: 0.88rem;
+        border: 1px solid rgba(122, 216, 107, 0.2);
+    }
+
     div[data-testid="stForm"] {
-        background: rgba(255, 255, 255, 0.08);  /* transparan */
-        backdrop-filter: blur(15px);           /* efek kaca */
-        border-radius: 20px;
-        padding: 30px;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        background: rgba(10, 18, 12, 0.58);
+        backdrop-filter: blur(18px);
+        border-radius: 24px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
     }
 
-    /* TEXT */
-    label, .stMarkdown, .stSubheader {
+    .section-title,
+    .stSubheader {
+        color: white !important;
+        font-weight: 700;
+        margin-top: 0.35rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .stMarkdown,
+    label {
         color: white !important;
     }
 
-    /* INPUT BOX */
-    input, select {
-        background-color: rgba(0,0,0,0.6) !important;
+    input, select, textarea {
+        background-color: rgba(0,0,0,0.48) !important;
         color: white !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255,255,255,0.16) !important;
     }
 
-    /* NUMBER INPUT */
     div[data-baseweb="input"] {
-        background-color: rgba(0,0,0,0.6) !important;
-        border-radius: 10px !important;
+        background-color: rgba(0,0,0,0.48) !important;
+        border-radius: 12px !important;
     }
 
-    /* DROPDOWN */
     div[data-baseweb="select"] > div {
-        background-color: rgba(0,0,0,0.6) !important;
+        background-color: rgba(0,0,0,0.48) !important;
         color: white !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
     }
 
-    /* BUTTON */
     .stButton > button {
-        background: linear-gradient(135deg, #4CAF50, #2ecc71);
+        background: linear-gradient(135deg, #7ad86b, #2f9e57);
         color: white;
-        border-radius: 12px;
-        padding: 10px 25px;
+        border-radius: 999px;
+        padding: 0.8rem 1.5rem;
         border: none;
+        font-weight: 700;
+        box-shadow: 0 12px 28px rgba(47, 158, 87, 0.35);
     }
 
     .stButton > button:hover {
-        transform: scale(1.05);
+        transform: translateY(-1px);
+    }
+
+    .result-card {
+        margin-top: 1rem;
+        padding: 1rem 1.2rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: white;
+    }
+
+    .small-note {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.92rem;
+    }
+
+    div[data-testid="stForm"] label {
+        display: block;
+        margin-bottom: 0.35rem;
+    }
+
+    div[data-testid="stForm"] {
+        text-align: center;
+    }
+
+    div[data-testid="stForm"] .stNumberInput,
+    div[data-testid="stForm"] .stSelectbox {
+        text-align: left;
+    }
+
+    div[data-testid="stForm"] [data-testid="column"] {
+        gap: 1rem;
     }
 
     </style>
-    """, unsafe_allow_html=True)
+    """.replace("__BG__", BACKGROUND_IMAGE), unsafe_allow_html=True)
 
 
 # ================================
@@ -169,16 +317,22 @@ if st.session_state.page == "home":
 
     set_home_style()
 
-    st.markdown('<div class="full-center">', unsafe_allow_html=True)
+    left, center, right = st.columns([0.25, 2.5, 0.25], gap="small")
 
-    st.markdown('<div class="title">🌱 Plant Growth Prediction</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Prediksi apakah tanaman dapat tumbuh berdasarkan kondisi lingkungan</div>', unsafe_allow_html=True)
+    with center:
+        st.markdown('<div class="home-center">', unsafe_allow_html=True)
+        st.markdown('<div class="home-title">🌱 Plant Growth Prediction</div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-subtitle">Prediksi apakah tanaman dapat tumbuh berdasarkan kondisi lingkungan</div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-subtitle">Masukkan data tanah dan lingkungan, lalu sistem akan mengembalikan hasil prediksi secara otomatis.</div>', unsafe_allow_html=True)
 
-    if st.button("🚀 Start"):
-        st.session_state.page = "predict"
-        st.rerun()
+        btn_left, btn_center, btn_right = st.columns([1, 0.7, 1])
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        with btn_center:
+            if st.button("🚀 Start", use_container_width=True):
+                st.session_state.page = "predict"
+                st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ================================
 # PREDICTION PAGE
@@ -187,11 +341,13 @@ elif st.session_state.page == "predict":
 
     set_predict_style()
 
+    st.markdown('<div class="top-strip"><div><div class="pill">🌿 Plant Growth</div><div class="small-note">Frontend Streamlit terhubung ke backend FastAPI di port 8000</div></div></div>', unsafe_allow_html=True)
     st.title("Input Data Tanaman")
+    st.markdown('<div class="page-subtitle">Isi parameter lingkungan di bawah ini, lalu tekan Predict untuk melihat hasilnya.</div>', unsafe_allow_html=True)
 
     with st.form("form"):
 
-        st.subheader("🌡️ Environmental Conditions")
+        st.markdown('<div class="section-title">🌡️ Environmental Conditions</div>', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
 
@@ -208,7 +364,7 @@ elif st.session_state.page == "predict":
             phosphorus = st.number_input("Phosphorus (ppm)", value=5.0)
             potassium = st.number_input("Potassium (ppm)", value=8.0)
 
-        st.subheader("🌿 Soil & Plant Info")
+        st.markdown('<div class="section-title">🌿 Soil & Plant Info</div>', unsafe_allow_html=True)
 
         soil_type = st.selectbox("Soil Type", ["clay", "sandy", "loam"])
         plant_category = st.selectbox("Plant Category", ["vegetable", "fruit", "grain"])
@@ -253,11 +409,6 @@ elif st.session_state.page == "predict":
                 )
 
                 # ================================
-                # DEBUG STATUS
-                # ================================
-                st.write("Status Code:", response.status_code)
-
-                # ================================
                 # CEK RESPONSE
                 # ================================
                 result = response.json()
@@ -280,8 +431,8 @@ elif st.session_state.page == "predict":
                     st.write(result)
 
             except Exception as e:
-                st.error("Tidak bisa konek ke backend")
-                st.write(e)
+                st.error("Tidak bisa konek ke backend. Pastikan FastAPI sudah berjalan di http://127.0.0.1:8000")
+                st.caption(str(e))
 
     if st.button("⬅Back"):
         st.session_state.page = "home"
