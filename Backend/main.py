@@ -154,6 +154,34 @@ def build_model_input(df):
     return encoded
 
 
+def get_prediction_percentages(model, model_input, prediction):
+    predicted_label = int(prediction)
+
+    if hasattr(model, "predict_proba"):
+        probabilities = model.predict_proba(model_input)[0]
+        classes = list(getattr(model, "classes_", []))
+
+        class_probability = {int(cls): float(prob) for cls, prob in zip(classes, probabilities)}
+
+        success_probability = class_probability.get(0, float(probabilities[0] if len(probabilities) > 0 else 0.0))
+        failure_probability = class_probability.get(1, float(probabilities[1] if len(probabilities) > 1 else 1.0 - success_probability))
+
+        success_percentage = round(success_probability * 100, 2)
+        failure_percentage = round(failure_probability * 100, 2)
+    else:
+        if predicted_label == 1:
+            success_percentage = 0.0
+            failure_percentage = 100.0
+        else:
+            success_percentage = 100.0
+            failure_percentage = 0.0
+
+    return {
+        "success_percentage": success_percentage,
+        "failure_percentage": failure_percentage,
+    }
+
+
 # ================================
 # HOME
 # ================================
@@ -182,28 +210,36 @@ def predict(data: dict):
             return {
                 "prediction": 1,
                 "status": "rule-based",
-                "reason": "pH terlalu ekstrem"
+                "reason": "pH terlalu ekstrem",
+                "success_percentage": 0.0,
+                "failure_percentage": 100.0,
             }
 
         if data["soil_moisture_pct"] < 10:
             return {
                 "prediction": 1,
                 "status": "rule-based",
-                "reason": "Tanah terlalu kering"
+                "reason": "Tanah terlalu kering",
+                "success_percentage": 0.0,
+                "failure_percentage": 100.0,
             }
 
         if data["soil_moisture_pct"] > 90:
             return {
                 "prediction": 1,
                 "status": "rule-based",
-                "reason": "Tanah terlalu basah"
+                "reason": "Tanah terlalu basah",
+                "success_percentage": 0.0,
+                "failure_percentage": 100.0,
             }
 
         if data["air_temp_c"] < 0 or data["air_temp_c"] > 50:
             return {
                 "prediction": 1,
                 "status": "rule-based",
-                "reason": "Suhu ekstrem"
+                "reason": "Suhu ekstrem",
+                "success_percentage": 0.0,
+                "failure_percentage": 100.0,
             }
 
         # ================================
@@ -238,17 +274,20 @@ def predict(data: dict):
         # PREDICT ML
         # ================================
         prediction = model.predict(model_input)[0] if hasattr(model, "feature_names_in_") else model.predict(model_input.to_numpy())[0]
+        percentages = get_prediction_percentages(model, model_input, prediction)
 
         if int(prediction) == 1:
             return {
                 "prediction": 1,
                 "status": "ml",
+                **percentages,
                 "reason": "Model memprediksi kombinasi input ini masih belum optimal untuk tumbuh"
             }
 
         return {
             "prediction": int(prediction),
-            "status": "ml"
+            "status": "ml",
+            **percentages
         }
 
     except Exception as e:
