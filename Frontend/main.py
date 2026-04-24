@@ -468,6 +468,31 @@ def set_predict_style():
     </style>
     """, unsafe_allow_html=True)
 
+
+def init_predict_defaults():
+    defaults = {
+        "bulk_density": 1.2,
+        "organic_matter": 4.0,
+        "cec": 16.0,
+        "buffering": 12.0,
+        "air_temp": 25.0,
+        "soil_temp": 25.0,
+        "moisture": 50.0,
+        "salinity": 0.2,
+        "light": 500.0,
+        "ph": 6.5,
+        "nitrogen": 120.0,
+        "phosphorus": 60.0,
+        "potassium": 200.0,
+        "soil_type": "Alluvial",
+        "plant_category": "cereal",
+    }
+
+    for key, value in defaults.items():
+        st.session_state.setdefault(key, value)
+
+    st.session_state["predict_defaults_version"] = "success_profile_v1"
+
 # ================================
 # HOME
 # ================================
@@ -533,6 +558,7 @@ if st.session_state.page == "home":
 elif st.session_state.page == "predict":
 
     set_predict_style()
+    init_predict_defaults()
 
     st.title("Input Data Tanaman")
 
@@ -546,12 +572,12 @@ elif st.session_state.page == "predict":
         col1, col2 = st.columns(2)
 
         with col1:
-            bulk_density = st.number_input("Bulk Density", value=1.2)
-            organic_matter = st.number_input("Organic Matter (%)", value=5.0)
-            cec = st.number_input("Cation Exchange Capacity", value=10.0)
+            bulk_density = st.number_input("Bulk Density", key="bulk_density")
+            organic_matter = st.number_input("Organic Matter (%)", key="organic_matter")
+            cec = st.number_input("Cation Exchange Capacity", key="cec")
 
         with col2:
-            buffering = st.number_input("Buffering Capacity", value=5.0)
+            buffering = st.number_input("Buffering Capacity", key="buffering")
 
         # ================================
         # ENVIRONMENT
@@ -561,17 +587,17 @@ elif st.session_state.page == "predict":
         col1, col2 = st.columns(2)
 
         with col1:
-            air_temp = st.number_input("Air Temperature (°C)", value=25.0)
-            soil_temp = st.number_input("Soil Temperature (°C)", value=24.0)
-            moisture = st.number_input("Soil Moisture (%)", value=50.0)
-            salinity = st.number_input("Salinity (EC)", value=0.3)
-            light = st.number_input("Light Intensity", value=500.0)
+            air_temp = st.number_input("Air Temperature (°C)", key="air_temp")
+            soil_temp = st.number_input("Soil Temperature (°C)", key="soil_temp")
+            moisture = st.number_input("Soil Moisture (%)", key="moisture")
+            salinity = st.number_input("Salinity (EC)", key="salinity")
+            light = st.number_input("Light Intensity", key="light")
 
         with col2:
-            ph = st.number_input("Soil pH", value=6.5)
-            nitrogen = st.number_input("Nitrogen (ppm)", value=10.0)
-            phosphorus = st.number_input("Phosphorus (ppm)", value=5.0)
-            potassium = st.number_input("Potassium (ppm)", value=8.0)
+            ph = st.number_input("Soil pH", key="ph")
+            nitrogen = st.number_input("Nitrogen (ppm)", key="nitrogen")
+            phosphorus = st.number_input("Phosphorus (ppm)", key="phosphorus")
+            potassium = st.number_input("Potassium (ppm)", key="potassium")
 
         # ================================
         # CATEGORY (TIDAK DIUBAH SESUAI PERMINTAANMU)
@@ -581,9 +607,9 @@ elif st.session_state.page == "predict":
         soil_type = st.selectbox("Soil Type", [
             "Sandy","Loamy","Clayey","Silty","Peaty",
             "Chalky","Saline","Laterite","Alluvial"
-        ])
+        ], key="soil_type")
 
-        plant_category = st.selectbox("Plant Category", ["cereal","legume","vegetable"])
+        plant_category = st.selectbox("Plant Category", ["cereal","legume","vegetable"], key="plant_category")
 
         submit = st.form_submit_button("Predict")
 
@@ -674,8 +700,11 @@ elif st.session_state.page == "predict":
             try:
                 response = requests.post(
                     "http://127.0.0.1:8000/predict",
-                    json=data
+                    json=data,
+                    timeout=10
                 )
+
+                response.raise_for_status()
 
                 result = response.json()
 
@@ -692,12 +721,22 @@ elif st.session_state.page == "predict":
                 # NORMAL MODEL
                 else:
                     if result["prediction"] == 1:
-                        st.error("❌ Tanaman Tidak Dapat Tumbuh (Model)")
+                        reason = result.get("reason", "Model memprediksi kondisi ini masih belum optimal untuk tumbuh")
+                        st.error(f"❌ Tanaman Tidak Dapat Tumbuh ({reason})")
                     else:
                         st.success("✅ Tanaman Dapat Tumbuh")
 
-            except Exception as e:
-                st.error("Backend tidak jalan")
+            except requests.exceptions.ConnectionError:
+                st.error("Backend belum aktif. Jalankan server di Backend/main.py terlebih dahulu.")
+
+            except requests.exceptions.Timeout:
+                st.error("Request ke backend terlalu lama. Coba lagi setelah server siap.")
+
+            except requests.exceptions.HTTPError as e:
+                st.error(f"Backend mengembalikan status error: {e.response.status_code}")
+
+            except requests.exceptions.RequestException as e:
+                st.error("Gagal menghubungi backend.")
                 st.write(e)
 
     if st.button("⬅ Back"):
