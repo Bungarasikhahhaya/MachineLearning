@@ -1,13 +1,16 @@
 from fastapi import FastAPI
 import joblib
 import pandas as pd
+from pathlib import Path
+import numpy as np
 
 app = FastAPI()
 
 # ================================
 # LOAD MODEL
 # ================================
-model = joblib.load("../model/model1.pkl")
+MODEL_PATH = Path(__file__).resolve().parent.parent / "model" / "model.pkl"
+model = joblib.load(MODEL_PATH)
 
 
 # ================================
@@ -58,28 +61,97 @@ def feature_engineering(df):
 # NORMALISASI CATEGORY
 # ================================
 def normalize_category(df):
-
-    soil_map = {
-        "Sandy": "sandy",
-        "Loamy": "loam",
-        "Clayey": "clay",
-        "Silty": "loam",
-        "Peaty": "loam",
-        "Chalky": "clay",
-        "Saline": "sandy",
-        "Laterite": "clay",
-        "Alluvial": "loam"
-    }
-
     if "soil_type" in df.columns:
-        df["soil_type"] = df["soil_type"].map(
-            lambda x: soil_map.get(x, str(x).lower())
-        )
+        df["soil_type"] = df["soil_type"].astype(str).str.title()
 
     if "plant_category" in df.columns:
         df["plant_category"] = df["plant_category"].str.lower()
 
     return df
+
+
+# ================================
+# FALLBACK FEATURE MATRIX
+# ================================
+def build_model_input(df):
+
+    # ================================
+    # DERIVED FEATURES
+    # ================================
+    df = df.copy()
+
+    df["phosphorus_ppm"] = df["phosphorus_ppm"].replace(0, 0.0001)
+    df["potassium_ppm"] = df["potassium_ppm"].replace(0, 0.0001)
+
+    # Features used by the training notebook before preprocessing.
+    numeric_features = [
+        "bulk_density",
+        "organic_matter_pct",
+        "cation_exchange_capacity",
+        "salinity_ec",
+        "buffering_capacity",
+        "soil_moisture_pct",
+        "moisture_limit_dry",
+        "moisture_limit_wet",
+        "moisture_z_by_soil",
+        "soil_temp_c",
+        "air_temp_c",
+        "light_intensity_par",
+        "soil_ph",
+        "nitrogen_ppm",
+        "phosphorus_ppm",
+        "potassium_ppm",
+        "np_ratio",
+        "nk_ratio",
+        "moisture_deficit",
+        "moisture_excess",
+        "salinity_stress",
+        "ph_deviation",
+    ]
+
+    df["np_ratio"] = df["nitrogen_ppm"] / df["phosphorus_ppm"]
+    df["nk_ratio"] = df["nitrogen_ppm"] / df["potassium_ppm"]
+    df["ph_deviation"] = abs(df["soil_ph"] - 6.5)
+    df["moisture_deficit"] = 60 - df["soil_moisture_pct"]
+    df["moisture_excess"] = df["soil_moisture_pct"] - 60
+    df["salinity_stress"] = df["salinity_ec"] * df["soil_moisture_pct"]
+
+    if "moisture_limit_dry" not in df.columns:
+        df["moisture_limit_dry"] = 30
+    if "moisture_limit_wet" not in df.columns:
+        df["moisture_limit_wet"] = 80
+    if "moisture_z_by_soil" not in df.columns:
+        df["moisture_z_by_soil"] = 0
+
+    numeric_df = df[numeric_features].copy()
+
+    soil_dummies = pd.get_dummies(df["soil_type"], prefix="soil_type")
+    plant_dummies = pd.get_dummies(df["plant_category"], prefix="plant_category")
+
+    expected_columns = [
+        *numeric_features,
+        "soil_type_Alluvial",
+        "soil_type_Chalky",
+        "soil_type_Clayey",
+        "soil_type_Laterite",
+        "soil_type_Loamy",
+        "soil_type_Peaty",
+        "soil_type_Saline",
+        "soil_type_Sandy",
+        "soil_type_Silty",
+        "plant_category_cereal",
+        "plant_category_legume",
+        "plant_category_vegetable",
+    ]
+
+    encoded = pd.concat([numeric_df, soil_dummies, plant_dummies], axis=1)
+
+    for col in expected_columns:
+        if col not in encoded.columns:
+            encoded[col] = 0
+
+    encoded = encoded[expected_columns]
+    return encoded
 
 
 # ================================
@@ -150,21 +222,29 @@ def predict(data: dict):
         df = feature_engineering(df)
 
         # ================================
-        # HANDLE MISSING FEATURE
+        # ALIGN FEATURES
         # ================================
-        for col in model.feature_names_in_:
-            if col not in df.columns:
-                df[col] = 0
+        if hasattr(model, "feature_names_in_"):
+            for col in model.feature_names_in_:
+                if col not in df.columns:
+                    df[col] = 0
 
-        # ================================
-        # ALIGN ORDER
-        # ================================
-        df = df[model.feature_names_in_]
+            df = df[model.feature_names_in_]
+            model_input = df
+        else:
+            model_input = build_model_input(df)
 
         # ================================
         # PREDICT ML
         # ================================
-        prediction = model.predict(df)[0]
+        prediction = model.predict(model_input)[0] if hasattr(model, "feature_names_in_") else model.predict(model_input.to_numpy())[0]
+
+        if int(prediction) == 1:
+            return {
+                "prediction": 1,
+                "status": "ml",
+                "reason": "Model memprediksi kombinasi input ini masih belum optimal untuk tumbuh"
+            }
 
         return {
             "prediction": int(prediction),
