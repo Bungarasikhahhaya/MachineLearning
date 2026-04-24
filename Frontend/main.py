@@ -1,13 +1,14 @@
 import streamlit as st
 import requests
+from textwrap import dedent
 
 # ================================
 # CONFIG
 # ================================
 st.set_page_config(page_title="Plant Growth", layout="wide")
 
-BACKGROUND_IMAGE = "https://images.pexels.com/photos/1379620/pexels-photo-1379620.jpeg"
-VIDEO_THUMB_IMAGE = "https://images.pexels.com/photos/1072824/pexels-photo-1072824.jpeg"
+BACKGROUND_IMAGE = "https://images.pexels.com/photos/10796342/pexels-photo-10796342.jpeg?cs=srgb&dl=pexels-vargaphotography-10796342.jpg&fm=jpg"
+VIDEO_THUMB_IMAGE = "https://images.pexels.com/photos/36375100/pexels-photo-36375100.jpeg"
 
 # ================================
 # STATE
@@ -43,10 +44,106 @@ def set_home_style():
     }
 
     div[data-testid="stAppViewContainer"] .main .block-container {
-        max-width: 1240px;
-        padding-top: 0rem;
-        padding-bottom: 0rem;
+        max-width: 1400px;
+        padding-top: 1.2rem;
+        padding-bottom: 1.4rem;
         margin-top: 0rem;
+    }
+
+    .predict-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+        gap: 1.35rem;
+        align-items: start;
+    }
+
+    .panel-card {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+                soil_col1, soil_col2 = st.columns(2)
+        padding: 1.1rem;
+                with soil_col1:
+    }
+                    organic_matter = st.number_input("Organic Matter (%)", key="organic_matter")
+        position: sticky;
+                with soil_col2:
+    }
+                    cec = st.number_input("Cation Exchange Capacity", key="cec")
+
+    .panel-title {
+        margin: 0 0 0.85rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+                row1_left, row1_right = st.columns(2)
+                with row1_left:
+                    air_temp = st.number_input("Air Temperature (°C)", key="air_temp")
+                with row1_right:
+                    soil_temp = st.number_input("Soil Temperature (°C)", key="soil_temp")
+    }
+                row2_left, row2_right = st.columns(2)
+                with row2_left:
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+                with row2_right:
+        gap: 0.85rem;
+
+                row3_left, row3_right = st.columns(2)
+                with row3_left:
+                    light = st.number_input("Light Intensity", key="light")
+                with row3_right:
+        background: rgba(255,255,255,0.08);
+
+                row4_left, row4_right = st.columns(2)
+                with row4_left:
+        border: 1px solid rgba(255,255,255,0.12);
+                with row4_right:
+        border-radius: 14px;
+
+                potassium = st.number_input("Potassium (ppm)", key="potassium")
+    }
+
+    .summary-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+                category_col1, category_col2 = st.columns(2)
+
+                with category_col1:
+                    soil_type = st.selectbox("Soil Type", [
+                        "Sandy","Loamy","Clayey","Silty","Peaty",
+                        "Chalky","Saline","Laterite","Alluvial"
+                    ], key="soil_type")
+
+                with category_col2:
+                    plant_category = st.selectbox("Plant Category", ["cereal","legume","vegetable"], key="plant_category")
+        line-height: 1.35;
+        font-weight: 700;
+        color: rgba(245, 250, 236, 0.96);
+    }
+
+    .result-card {
+        margin-top: 1rem;
+        background: rgba(8, 28, 24, 0.68);
+        border: 1px solid rgba(182, 243, 77, 0.24);
+        border-radius: 18px;
+        padding: 1rem 1rem 1.05rem;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    .result-state {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        font-weight: 800;
+    }
+
+    .result-muted {
+        color: rgba(241, 250, 235, 0.7);
+        font-size: 0.92rem;
+        line-height: 1.5;
+        margin-top: 0.4rem;
     }
 
     .hero-shell {
@@ -131,11 +228,11 @@ def set_home_style():
 
     .hero-right {
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         padding-top: 0;
         margin-top: -0.35rem;
-        margin-left: -2.2rem;
+        margin-left: -0.4rem;
     }
 
     .hero-bottom {
@@ -212,7 +309,7 @@ def set_home_style():
         aspect-ratio: 1 / 0.72;
         border-radius: 22px;
         overflow: hidden;
-        margin-left: auto;
+        margin-left: 0;
         box-shadow: 0 22px 56px rgba(0, 0, 0, 0.38);
         border: 1px solid rgba(255, 255, 255, 0.12);
         background: rgba(255, 255, 255, 0.08);
@@ -291,6 +388,18 @@ def set_home_style():
     }
 
     @media (max-width: 900px) {
+        .predict-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .panel-card--side {
+            position: static;
+        }
+
         .hero-stage {
             grid-template-columns: 1fr;
             margin-top: 0;
@@ -380,10 +489,129 @@ def set_predict_style():
        CENTER CONTAINER
     ========================= */
     .block-container {{
-        max-width: 850px;  
-        padding: 2rem 2rem;
+        max-width: 1120px;  
+        padding: 2.6rem 3.6rem;
         margin: auto;
         animation: fadeIn 0.7s ease-out;
+    }}
+
+    .predict-layout {{
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+        gap: 2rem;
+        align-items: start;
+    }}
+
+    .panel-card {{
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 34px rgba(0,0,0,0.34);
+        padding: 1.75rem;
+        color: white;
+    }}
+
+    .panel-card--side {{
+        position: sticky;
+        top: 1rem;
+    }}
+
+    .panel-card--summary {{
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 34px rgba(0,0,0,0.34);
+        padding: 1.75rem;
+        color: white;
+    }}
+
+    .summary-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.35rem 1rem;
+    }}
+
+    .summary-item {{
+        padding: 0.25rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.10);
+    }}
+
+    .summary-item:last-child {{
+        border-bottom: none;
+    }}
+
+    .summary-key {{
+        font-size: 0.65rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(224, 245, 202, 0.78);
+        margin-bottom: 0.2rem;
+    }}
+
+    .summary-val {{
+        font-size: 0.92rem;
+        line-height: 1.3;
+        font-weight: 700;
+        color: #f7fbf4;
+    }}
+
+    @media (max-width: 900px) {{
+        .summary-grid {{
+            grid-template-columns: 1fr;
+        }}
+    }}
+
+    .panel-title {{
+        margin: 0 0 0.85rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.92);
+    }}
+
+    .result-state {{
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        font-weight: 800;
+        color: rgba(248, 251, 244, 0.98);
+    }}
+
+    .result-muted {{
+        color: rgba(241, 250, 235, 0.78);
+        font-size: 0.92rem;
+        line-height: 1.5;
+        margin-top: 0.4rem;
+    }}
+
+    div[data-testid="stMetric"] {{
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        padding: 0.75rem 0.85rem;
+    }}
+
+    div[data-testid="stMetricLabel"] {{
+        color: rgba(255,255,255,0.84) !important;
+    }}
+
+    div[data-testid="stMetricValue"] {{
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }}
+
+    .summary-section {{
+        margin-bottom: 0.95rem;
+    }}
+
+    .summary-section-title {{
+        font-size: 0.72rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: rgba(224, 245, 202, 0.72);
+        margin: 0 0 0.55rem;
     }}
 
     /* FADE IN ANIMATION */
@@ -431,6 +659,21 @@ def set_predict_style():
         width: 100%;
     }}
 
+    div[data-testid="stForm"] div[data-testid="stButton"] {{
+        justify-content: center;
+    }}
+
+    div[data-testid="stFormSubmitButton"] {{
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }}
+
+    div[data-testid="stFormSubmitButton"] > button {{
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }}
+
     div[data-testid="stButton"] > button {{
         background: rgba(255, 255, 255, 0.08) !important;
         color: white !important;
@@ -443,19 +686,23 @@ def set_predict_style():
 
         transition: all 0.3s ease !important;
 
-        margin: 10px auto !important;
-        display: block;
+        margin: 12px auto 0 !important;
+        display: inline-flex;
+        width: auto !important;
+        min-width: 140px;
 
         box-shadow: 0 0 0 rgba(0,0,0,0);
     }}
 
     div[data-testid="stButton"] > button:hover {{
-        background: linear-gradient(135deg, #7ad86b, #2f9e57) !important;
+        background: linear-gradient(135deg, #b7ff5f, #5dff7a) !important;
+        color: #0f1f12 !important;
+        border-color: rgba(183, 255, 95, 0.95) !important;
 
         box-shadow: 
-            0 0 10px rgba(122, 216, 107, 0.7),
-            0 0 20px rgba(122, 216, 107, 0.5),
-            0 0 35px rgba(122, 216, 107, 0.3);
+            0 0 10px rgba(183, 255, 95, 0.85),
+            0 0 20px rgba(93, 255, 122, 0.7),
+            0 0 35px rgba(93, 255, 122, 0.45);
 
         transform: translateY(-2px) scale(1.05);
     }}
@@ -465,33 +712,45 @@ def set_predict_style():
         box-shadow: 0 0 8px rgba(122, 216, 107, 0.6);
     }}
 
+    @media (max-width: 900px) {{
+        .predict-layout {{
+            grid-template-columns: 1fr;
+        }}
+
+        .panel-card--side {{
+            position: static;
+        }}
+    }}
+
     </style>
     """, unsafe_allow_html=True)
 
 
 def init_predict_defaults():
+    profile_version = "success_profile_v4"
     defaults = {
-        "bulk_density": 1.2,
-        "organic_matter": 4.0,
-        "cec": 16.0,
-        "buffering": 12.0,
-        "air_temp": 25.0,
-        "soil_temp": 25.0,
-        "moisture": 50.0,
-        "salinity": 0.2,
-        "light": 500.0,
-        "ph": 6.5,
-        "nitrogen": 120.0,
-        "phosphorus": 60.0,
-        "potassium": 200.0,
+        "bulk_density": 1.3,
+        "organic_matter": 3.8,
+        "cec": 20.0,
+        "buffering": 0.7,
+        "air_temp": 29.2,
+        "soil_temp": 23.4,
+        "moisture": 39.67,
+        "salinity": 0.4,
+        "light": 380.0,
+        "ph": 6.25,
+        "nitrogen": 29.4,
+        "phosphorus": 80.4,
+        "potassium": 105.0,
         "soil_type": "Alluvial",
-        "plant_category": "cereal",
+        "plant_category": "legume",
     }
 
-    for key, value in defaults.items():
-        st.session_state.setdefault(key, value)
+    if st.session_state.get("predict_defaults_version") != profile_version:
+        for key, value in defaults.items():
+            st.session_state[key] = value
 
-    st.session_state["predict_defaults_version"] = "success_profile_v1"
+    st.session_state["predict_defaults_version"] = profile_version
 
 # ================================
 # HOME
@@ -501,7 +760,7 @@ if st.session_state.page == "home":
     set_home_style()
 
     st.markdown('<div class="hero-shell">', unsafe_allow_html=True)
-    left, right = st.columns([1.28, 0.72], gap="small")
+    left, right = st.columns([1.42, 0.58], gap="small")
 
     with left:
         st.markdown('<div class="hero-left">', unsafe_allow_html=True)
@@ -562,70 +821,116 @@ elif st.session_state.page == "predict":
 
     st.title("Input Data Tanaman")
 
-    with st.form("form"):
+    left_col, right_col = st.columns([1.08, 0.92], gap="large")
 
-        # ================================
-        # SOIL
-        # ================================
-        st.subheader("Soil Properties")
+    with left_col:
+        with st.form("form"):
 
-        col1, col2 = st.columns(2)
+            # ================================
+            # SOIL
+            # ================================
+            st.subheader("Soil Properties")
 
-        with col1:
-            bulk_density = st.number_input("Bulk Density", key="bulk_density")
-            organic_matter = st.number_input("Organic Matter (%)", key="organic_matter")
-            cec = st.number_input("Cation Exchange Capacity", key="cec")
+            soil_row1_left, soil_row1_right = st.columns(2)
+            with soil_row1_left:
+                bulk_density = st.number_input("Bulk Density", key="bulk_density")
+            with soil_row1_right:
+                buffering = st.number_input("Buffering Capacity", key="buffering")
 
-        with col2:
-            buffering = st.number_input("Buffering Capacity", key="buffering")
+            soil_row2_left, soil_row2_right = st.columns(2)
+            with soil_row2_left:
+                organic_matter = st.number_input("Organic Matter (%)", key="organic_matter")
+            with soil_row2_right:
+                cec = st.number_input("Cation Exchange Capacity", key="cec")
 
-        # ================================
-        # ENVIRONMENT
-        # ================================
-        st.subheader("🌡️ Environmental Conditions")
+            # ================================
+            # ENVIRONMENT
+            # ================================
+            st.subheader("🌡️ Environmental Conditions")
 
-        col1, col2 = st.columns(2)
+            env_row1_left, env_row1_right = st.columns(2)
+            with env_row1_left:
+                air_temp = st.number_input("Air Temperature (°C)", key="air_temp")
+            with env_row1_right:
+                soil_temp = st.number_input("Soil Temperature (°C)", key="soil_temp")
 
-        with col1:
-            air_temp = st.number_input("Air Temperature (°C)", key="air_temp")
-            soil_temp = st.number_input("Soil Temperature (°C)", key="soil_temp")
-            moisture = st.number_input("Soil Moisture (%)", key="moisture")
-            salinity = st.number_input("Salinity (EC)", key="salinity")
-            light = st.number_input("Light Intensity", key="light")
+            env_row2_left, env_row2_right = st.columns(2)
+            with env_row2_left:
+                moisture = st.number_input("Soil Moisture (%)", key="moisture")
+            with env_row2_right:
+                salinity = st.number_input("Salinity (EC)", key="salinity")
 
-        with col2:
-            ph = st.number_input("Soil pH", key="ph")
-            nitrogen = st.number_input("Nitrogen (ppm)", key="nitrogen")
-            phosphorus = st.number_input("Phosphorus (ppm)", key="phosphorus")
+            env_row3_left, env_row3_right = st.columns(2)
+            with env_row3_left:
+                light = st.number_input("Light Intensity", key="light")
+            with env_row3_right:
+                ph = st.number_input("Soil pH", key="ph")
+
+            env_row4_left, env_row4_right = st.columns(2)
+            with env_row4_left:
+                nitrogen = st.number_input("Nitrogen (ppm)", key="nitrogen")
+            with env_row4_right:
+                phosphorus = st.number_input("Phosphorus (ppm)", key="phosphorus")
+
             potassium = st.number_input("Potassium (ppm)", key="potassium")
 
-        # ================================
-        # CATEGORY (TIDAK DIUBAH SESUAI PERMINTAANMU)
-        # ================================
-        st.subheader("🌿 Soil & Plant Info")
+            # ================================
+            # CATEGORY (TIDAK DIUBAH SESUAI PERMINTAANMU)
+            # ================================
+            st.subheader("🌿 Soil & Plant Info")
 
-        soil_type = st.selectbox("Soil Type", [
-            "Sandy","Loamy","Clayey","Silty","Peaty",
-            "Chalky","Saline","Laterite","Alluvial"
-        ], key="soil_type")
+            category_left, category_right = st.columns(2)
 
-        plant_category = st.selectbox("Plant Category", ["cereal","legume","vegetable"], key="plant_category")
+            with category_left:
+                soil_type = st.selectbox("Soil Type", [
+                    "Sandy","Loamy","Clayey","Silty","Peaty",
+                    "Chalky","Saline","Laterite","Alluvial"
+                ], key="soil_type")
 
-        submit = st.form_submit_button("Predict")
+            with category_right:
+                plant_category = st.selectbox("Plant Category", ["cereal","legume","vegetable"], key="plant_category")
 
-    # ================================
-    # PROCESS
-    # ================================
+            submit = st.form_submit_button("Predict")
+    summary_items = [
+        ("Air Temp", f"{air_temp} °C"),
+        ("Soil Temp", f"{soil_temp} °C"),
+        ("Moisture", f"{moisture} %"),
+        ("Salinity", f"{salinity} EC"),
+        ("Light", f"{light} PAR"),
+        ("pH", f"{ph}"),
+        ("Nitrogen", f"{nitrogen} ppm"),
+        ("Phosphorus", f"{phosphorus} ppm"),
+        ("Potassium", f"{potassium} ppm"),
+        ("CEC", f"{cec}"),
+        ("Bulk Density", f"{bulk_density}"),
+        ("Organic Matter", f"{organic_matter} %"),
+        ("Buffering", f"{buffering}"),
+        ("Soil Type", soil_type),
+        ("Plant Type", plant_category),
+    ]
+
+    summary_rows = [summary_items[index:index + 2] for index in range(0, len(summary_items), 2)]
+
+    summary_html = "".join(
+        '<div class="summary-grid">' + "".join(
+            f'<div class="summary-item"><div class="summary-key">{label}</div><div class="summary-val">{value}</div></div>'
+            for label, value in row
+        ) + '</div>'
+        for row in summary_rows
+    )
+
+    prediction_status = "idle"
+    prediction_reason = None
+    prediction_result = None
+    success_percentage = 0.0
+    failure_percentage = 0.0
+
     if submit:
 
-        # VALIDASI
         if nitrogen <= 0 or phosphorus <= 0 or potassium <= 0:
             st.error("❌ Nutrient tidak valid")
             st.stop()
 
-        # ================================
-        # INPUT DATA
-        # ================================
         data = {
             "air_temp_c": air_temp,
             "soil_temp_c": soil_temp,
@@ -644,48 +949,6 @@ elif st.session_state.page == "predict":
             "buffering_capacity": buffering
         }
 
-        st.subheader("📥 Input Data Summary")
-
-        st.markdown(f"""
-        <div style="
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            color: white;
-        ">
-
-        <b>🌡️ Environment</b><br>
-        • Air Temp: {air_temp} °C<br>
-        • Soil Temp: {soil_temp} °C<br>
-        • Moisture: {moisture} %<br>
-        • Salinity: {salinity} EC<br>
-        • Light: {light} PAR<br><br>
-
-        <b>🧪 Soil Chemistry</b><br>
-        • pH: {ph}<br>
-        • Nitrogen: {nitrogen} ppm<br>
-        • Phosphorus: {phosphorus} ppm<br>
-        • Potassium: {potassium} ppm<br><br>
-
-        <b>🌱 Soil Physical</b><br>
-        • Bulk Density: {bulk_density}<br>
-        • Organic Matter: {organic_matter} %<br>
-        • CEC: {cec}<br>
-        • Buffering: {buffering}<br><br>
-
-        <b>🌿 Category</b><br>
-        • Soil Type: {soil_type}<br>
-        • Plant Type: {plant_category}<br>
-
-        </div>
-        """, unsafe_allow_html=True)
-
-
-        # ================================
-        # FEATURE ENGINEERING (AUTO)
-        # ================================
         np_ratio = nitrogen / phosphorus
         nk_ratio = nitrogen / potassium
         ph_deviation = ph - 7
@@ -693,9 +956,6 @@ elif st.session_state.page == "predict":
         moisture_excess = moisture - 60
         salinity_stress = salinity * 1.5
 
-        # ================================
-        # REQUEST KE BACKEND
-        # ================================
         with st.spinner("Processing..."):
             try:
                 response = requests.post(
@@ -705,39 +965,72 @@ elif st.session_state.page == "predict":
                 )
 
                 response.raise_for_status()
+                prediction_result = response.json()
+                success_percentage = float(prediction_result.get("success_percentage", 0.0))
+                failure_percentage = float(prediction_result.get("failure_percentage", 0.0))
 
-                result = response.json()
-
-                st.subheader("📈 Hasil Prediksi")
-
-                # ERROR
-                if "error" in result:
-                    st.error(result["error"])
-
-                # RULE BASED
-                elif result.get("status") == "rule-based":
-                    st.error(f"❌ Tidak Dapat Tumbuh ({result.get('reason')})")
-
-                # NORMAL MODEL
+                if "error" in prediction_result:
+                    prediction_status = "error"
+                    prediction_reason = prediction_result["error"]
+                elif prediction_result.get("status") == "rule-based":
+                    prediction_status = "rule-based"
+                    prediction_reason = prediction_result.get("reason")
                 else:
-                    if result["prediction"] == 1:
-                        reason = result.get("reason", "Model memprediksi kondisi ini masih belum optimal untuk tumbuh")
-                        st.error(f"❌ Tanaman Tidak Dapat Tumbuh ({reason})")
+                    prediction_status = "success"
+                    if prediction_result["prediction"] == 1:
+                        prediction_reason = prediction_result.get("reason", "Model memprediksi kondisi ini masih belum optimal untuk tumbuh")
                     else:
-                        st.success("✅ Tanaman Dapat Tumbuh")
+                        prediction_reason = "Tanaman diprediksi dapat tumbuh"
 
             except requests.exceptions.ConnectionError:
-                st.error("Backend belum aktif. Jalankan server di Backend/main.py terlebih dahulu.")
+                prediction_status = "error"
+                prediction_reason = "Backend belum aktif. Jalankan server di Backend/main.py terlebih dahulu."
 
             except requests.exceptions.Timeout:
-                st.error("Request ke backend terlalu lama. Coba lagi setelah server siap.")
+                prediction_status = "error"
+                prediction_reason = "Request ke backend terlalu lama. Coba lagi setelah server siap."
 
             except requests.exceptions.HTTPError as e:
-                st.error(f"Backend mengembalikan status error: {e.response.status_code}")
+                prediction_status = "error"
+                prediction_reason = f"Backend mengembalikan status error: {e.response.status_code}"
 
             except requests.exceptions.RequestException as e:
-                st.error("Gagal menghubungi backend.")
-                st.write(e)
+                prediction_status = "error"
+                prediction_reason = f"Gagal menghubungi backend. {e}"
+
+    with right_col:
+        if submit and prediction_status == "success":
+            if prediction_result and prediction_result.get("prediction") == 1:
+                prediction_html = f'<div class="result-state">❌ {prediction_reason}</div>'
+            else:
+                prediction_html = '<div class="result-state">✅ Tanaman Dapat Tumbuh</div>'
+        elif submit and prediction_status in {"error", "rule-based"}:
+            prediction_html = f'<div class="result-state">❌ {prediction_reason}</div>'
+        else:
+            prediction_html = '<div class="result-muted">Isi data di sebelah kiri lalu klik Predict untuk melihat hasil prediksi di sini.</div>'
+
+        st.markdown(
+            dedent(f'''
+                <div class="panel-card panel-card--side panel-card--summary">
+                    <div class="panel-title">Ringkasan Data</div>
+                    {summary_html}
+                    <div class="panel-title" style="margin-top:1rem;">Hasil Prediksi</div>
+                    {prediction_html}
+                </div>
+            '''),
+            unsafe_allow_html=True,
+        )
+
+        if submit and prediction_status in {"success", "rule-based"}:
+            percent_left, percent_right = st.columns(2)
+
+            with percent_left:
+                st.metric("Keberhasilan", f"{success_percentage:.2f}%")
+                st.progress(max(0, min(100, int(round(success_percentage)))))
+
+            with percent_right:
+                st.metric("Kegagalan", f"{failure_percentage:.2f}%")
+                st.progress(max(0, min(100, int(round(failure_percentage)))))
 
     if st.button("⬅ Back"):
         st.session_state.page = "home"
