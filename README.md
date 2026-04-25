@@ -63,7 +63,6 @@ Tech Stack
 Install & Setup
 1. Clone Repository
 - [git clone https://github.com/username/plant-growth-prediction.git](https://github.com/Bungarasikhahhaya/MachineLearning.git)
-- cd plant-growth-prediction
 
 2. Install Depedencies
 - pip install -r requirements.txt
